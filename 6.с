@@ -1,0 +1,34 @@
+#include <stdio.h>
+#include <dirent.h>
+#include <unistd.h>
+
+int main(int argc, char *argv[]) {
+    char cwd[256];
+    getcwd(cwd, sizeof(cwd));
+
+    void list(const char *path) {
+        DIR *dir = opendir(path);
+        if (!dir) {
+            perror("Error");
+            return;
+        }
+
+        struct dirent *entry;
+        while ((entry = readdir(dir))) {
+            if (entry->d_name[0] != '.') {
+                printf("%s\n", entry->d_name);
+            }
+        }
+
+        closedir(dir);
+    }
+
+    printf("Current directory: \n");
+    list(cwd);
+
+    if (argc > 1) {
+        printf("\nSpecified directory:\n");
+        list(argv[1]);
+    }
+    return 0;
+}
