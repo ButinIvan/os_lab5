@@ -1,0 +1,18 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int a, char *v[]) {
+    FILE *f = fopen(v[1], "r");
+    int n = atoi(v[2]), l = 0, c;
+
+    while ((c = fgetc(f)) != EOF) {
+        putchar(c);
+        if (c == '\n' && n > 0 && ++l % n == 0) {
+            printf("\n--- Press Enter ---");
+            while (getchar() != '\n');
+        }
+    }
+
+    fclose(f);
+    return 0;
+}
