@@ -1,0 +1,26 @@
+#include <stdio.h>
+#include <sys/stat.h>
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) return 1;
+
+    struct stat st;
+    if (stat(argv[1], &st) != 0) return 1;
+
+    FILE *src = fopen(argv[1], "r");
+    FILE *dst = fopen(argv[2], "w");
+    if (!src || !dst) return 1;
+
+    int c;
+    while ((c = fgetc(src)) != EOF) {
+        if (fputc(c, dst) == EOF) return 1;
+    }
+
+    if (ferror(src)) return 1;
+
+    fclose(src);
+    fclose(dst);
+
+    chmod(argv[2], st.st_mode);
+    return 0;
+}
