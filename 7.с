@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <time.h>
+
+void search_directory(const char *path, FILE *output, 
+                      long min_size, long max_size, 
+                      time_t min_time, time_t max_time) {
+    
+    DIR *dir = opendir(path);
+    if (!dir) return;
+    
+    struct dirent *entry;
+    char full_path[2048];
+    
+    while ((entry = readdir(dir))) {
+        if (strcmp(entry->d_name, ".") == 0  
+            strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        
+        snprintf(full_path, sizeof(full_path), "%s/%s", path, entry->d_name);
+        
+        struct stat file_info;
+        if (stat(full_path, &file_info) != 0) continue;
+        
+        if (S_ISDIR(file_info.st_mode)) {
+            search_directory(full_path, output, min_size, max_size, min_time, max_time);
+        }
+        else if (S_ISREG(file_info.st_mode)) {
+            if (file_info.st_size < min_size  file_info.st_size > max_size) continue;
+            
+            time_t file_time = file_info.st_mtime;
+            if (file_time < min_time || file_time > max_time) continue;
+            
+            printf("%s %ld %ld\n", full_path, file_info.st_size, file_time);
+            fprintf(output, "%s %ld %ld\n", full_path, file_info.st_size, file_time);
+        }
+    }
+    
+    closedir(dir);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 7) {
+        printf("Usage: %s <dir> <file> <min_size> <max_size> <min_time> <max_time>\n", argv[0]);
+        return 1;
+    }
+    
+DIR *test_dir = opendir(argv[1]);
+    if (!test_dir) {
+        fprintf(stderr, "Error: Cannot open directory '%s'\n", argv[1]);
+        perror("Reason");
+        return 1;
+    }
+    closedir(test_dir);
+
+    FILE *output = fopen(argv[2], "w");
+    if (!output) {
+        printf("Error opening output file\n");
+        return 1;
+    }
+    
+    search_directory(argv[1], output, 
+                     atol(argv[3]), atol(argv[4]), 
+                     atol(argv[5]), atol(argv[6]));
+    
+    fclose(output);
+    return 0;
+}
